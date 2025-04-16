@@ -3,84 +3,57 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Ismail-Taha                                +#+  +:+       +#+        */
+/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/04/16 04:14:07 by Ismail-Taha       #+#    #+#             */
-/*   Updated: 2025/04/16 04:14:07 by Ismail-Taha      ###   ########.fr       */
+/*   Created: 2025/04/16 14:45:47 by Ismail-Taha       #+#    #+#             */
+/*   Updated: 2025/04/16 15:48:10 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
 /**
- * Signal handler setup
+ * Tests the lexer with different input strings
  */
-void	handle_signals(void)
+void	test_lexer(void)
 {
-	// TODO: Implement signal handling for CTRL+C, CTRL+D, etc.
-}
-
-/**
- * Main shell loop
- * 
- * @param env Environment variables
- * @return Exit status
- */
-int	main_loop(char **env)
-{
-	char	*input;
 	t_token	*tokens;
-	int		status;
+	char	*test_inputs[] = {
+		"echo hello world",
+		"ls -la | grep .c",
+		"echo \"quoted string\" 'another quote'",
+		"cat file.txt > output.txt",
+		"echo $HOME",
+		"ls -l; pwd",
+		"echo \"mixed $VAR in quotes\"",
+		"cat << EOF",
+		NULL
+	};
+	int		i;
 
-	status = 0;
-	while (1)
+	i = 0;
+	while (test_inputs[i])
 	{
-		// Display prompt and get input
-		input = readline("minishell$ ");
-		if (!input) // EOF (CTRL+D)
-			break;
-		
-		// Add to history if not empty
-		if (*input)
-			add_history(input);
-
-		// Tokenize input
-		tokens = tokenize(input);
+		printf("\n\033[1;32mTesting: \"%s\"\033[0m\n", test_inputs[i]);
+		tokens = tokenize(test_inputs[i]);
 		if (tokens)
 		{
-			// For debugging
 			print_tokens(tokens);
-
-			// TODO: Add parser and execution here
-			
-			// Free tokens
 			free_token_list(tokens);
 		}
 		else
-			printf("Error: Tokenization failed\n");
-
-		// Free input
-		free(input);
+			printf("Error tokenizing input\n");
+		i++;
 	}
-	return (status);
 }
 
 /**
- * Main function
- * 
- * @param argc Argument count
- * @param argv Argument vector
- * @param env Environment variables
- * @return Exit status
+ * Main entry point - test our lexer
  */
-int	main(int argc, char **argv, char **env)
+int	main(void)
 {
-	(void)argc;
-	(void)argv;
-
-	// Set up signal handling
-	handle_signals();
-
-	// Enter main shell loop
-	return (main_loop(env));
+	printf("\033[1;34m===== MINISHELL LEXER TEST =====\033[0m\n");
+	test_lexer();
+	printf("\033[1;34m==============================\033[0m\n");
+	return (0);
 }
