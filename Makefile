@@ -14,12 +14,11 @@ CC = cc
 
 CFLAGS = -Wall -Wextra -Werror
 
-# WSL-compatible readline linking
 LDFLAGS = -lreadline
 
 NAME = minishell
 
-SRCS = main.c lexer.c utils.c
+SRCS = main.c env_expander.c  lexer.c parser.c  syntax_checker.c
 
 OBJS = $(SRCS:.c=.o)
 
