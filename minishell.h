@@ -13,53 +13,50 @@
 #ifndef MINISHELL_H
 # define MINISHELL_H
 
-# include <stdio.h>        // printf, perror
+# include <stdio.h>
 # include <stdlib.h>
-# include <unistd.h>       // fork, execve, access, pipe, dup2
-# include <string.h>       // strcmp, strdup, strlen
-# include <signal.h>       // signal handling
-# include <fcntl.h>        // open, O_RDONLY, O_WRONLY, etc.
-# include <ctype.h>        // isspace, isalpha, etc.
-# include <sys/wait.h>     // wait, waitpid
-# include <sys/stat.h>     // stat for file checking
-# include <readline/readline.h> // command line input
-# include <readline/history.h>  // command history
-# include <errno.h>        // errno for error handling
-# include <stdbool.h>      // bool type
-
-// Forward declaration for environment variables
+# include <unistd.h>
+# include <string.h>
+# include <signal.h>
+# include <fcntl.h>
+# include <ctype.h>
+# include <sys/wait.h>
+# include <sys/stat.h>
+# include <readline/readline.h>
+# include <readline/history.h> 
+# include <errno.h> 
+# include <stdbool.h>
 typedef struct s_env t_env;
 
-// Token types
 enum e_type
 {
-	CMD,      // Command
-	ARG,      // Argument
-	PIPE,     // Pipe operator (|)
-	REDIR_IN, // Input redirection (<)
-	REDIR_OUT, // Output redirection (>)
-	APPEND,   // Append redirection (>>)
-	HEREDOC,  // Here document (<<)
-	SQUOTE,   // Single quote
-	DQUOTE,   // Double quote
-	SPACE,    // Space
-	TAB,      // Tab
-	NEW_LINE, // New line
-	ENV,      // Environment variable
-	AND_IF,   // Logical AND (&&)
-	OR_IF,    // Logical OR (||)
+	CMD,      // cmd
+	ARG,      // argument
+	PIPE,     // (|)
+	REDIR_IN, // (<)
+	REDIR_OUT, // (>)
+	APPEND,   // (>>)
+	HEREDOC,  // (<<)
+	SQUOTE,
+	DQUOTE,
+	SPACE, // (32)
+	TAB, // (\t)
+	NEW_LINE,
+	ENV,
+	AND_IF,   // (&&)
+	OR_IF,    // (||)
 };
 
-// Token structure - now with doubly linked list
+// token structure
 typedef struct s_token
 {
-	char			*content;  // Token content
-	enum e_type		type;      // Token type
-	struct s_token	*next;     // Next token
-	struct s_token	*prev;     // Previous token
+	char			*content;
+	enum e_type		type;    
+	struct s_token	*next;   
+	struct s_token	*prev;
 }	t_token;
 
-// Redirection structure - represents input/output redirections
+// input/output redirections
 typedef struct s_redir
 {
 	char			*file;     // Filename or delimiter
@@ -68,47 +65,44 @@ typedef struct s_redir
 	struct s_redir	*next;     // Next redirection
 }	t_redir;
 
-// Command structure - represents a simple command
+// command structure
 typedef struct s_cmd
 {
-	char	**cmd;            // Command and arguments
-	t_redir	*redir;           // Redirections list
-	bool    is_builtin;       // Optimization: flag if command is builtin
+	char	**cmd;
+	t_redir	*redir;           // redirections list
+	bool    is_builtin;       // flag if command is builtin
 }	t_cmd;
 
-// Tree node - the main structure for the AST
+// tree structure
 typedef struct s_tree
 {
-	enum e_type		type;      // Type of the node
-	void			*content;  // Content based on node type
-	struct s_tree	*left;     // Left child
-	struct s_tree	*right;    // Right child
+	enum e_type		type;
+	void			*content;
+	struct s_tree	*left;
+	struct s_tree	*right;
 }	t_tree;
 
-// Token functions
+// lexer functions
 t_token	*tokenize(char *line);
 t_token	*new_token(char *content, enum e_type type);
 void	add_token(t_token **list, t_token *new_token);
 void	free_tokens(t_token **tokens);
 
-// Syntax checking
 bool	check_syntax(t_token *tokens);
 
-// Tree functions
+// tree functions utils
 t_tree	*parse(t_token *tokens);
 t_tree	*new_tree_node(enum e_type type, void *content);
-void	add_tree_node(t_tree **root, t_tree *node, char side); // 'L' for left, 'R' for right
+void	add_tree_node(t_tree **root, t_tree *node, char side);
 void	free_tree(t_tree **tree);
 
-// Redirection functions
+// redirection functions
 t_redir	*new_redir_node(char *file, enum e_type type);
 void	add_redir_node(t_redir **lst, t_redir *new);
 void	free_redirs(t_redir **redirs);
 
-// Environment variable handling
 void	expand_env_vars(t_tree *tree, t_env *env);
 
-// Utility functions
 bool	is_operator_token(enum e_type type);
 bool	is_redir_token(enum e_type type);
 char	**dup_cmd_array(char **cmd);
