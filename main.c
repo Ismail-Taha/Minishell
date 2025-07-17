@@ -3,57 +3,84 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
+/*   By: yrachidi <yrachidi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/04/16 14:45:47 by Ismail-Taha       #+#    #+#             */
-/*   Updated: 2025/04/16 15:48:10 by marvin           ###   ########.fr       */
+/*   Created: 2025/05/07 17:29:58 by yrachidi          #+#    #+#             */
+/*   Updated: 2025/05/07 17:30:02 by yrachidi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-/**
- * Tests the lexer with different input strings
- */
-void	test_lexer(void)
-{
-	t_token	*tokens;
-	char	*test_inputs[] = {
-		"echo hello world",
-		"ls -la | grep .c",
-		"echo \"quoted string\" 'another quote'",
-		"cat file.txt > output.txt",
-		"echo $HOME",
-		"ls -l; pwd",
-		"echo \"mixed $VAR in quotes\"",
-		"cat << EOF",
-		NULL
-	};
-	int		i;
+int			g_last_exit_status = 0;
 
-	i = 0;
-	while (test_inputs[i])
+static int	process_command(char *input, t_env **env_list)
+{
+	t_token		*tokens;
+	t_command	*cmds;
+
+	tokens = NULL;
+	cmds = NULL;
+	tokens = tokenize_input(input);
+	if (!tokens)
+		return (0);
+	assign_token_types(tokens);
+	cmds = create_cmds(&tokens);
+	if (cmds)
 	{
-		printf("\n\033[1;32mTesting: \"%s\"\033[0m\n", test_inputs[i]);
-		tokens = tokenize(test_inputs[i]);
-		if (tokens)
-		{
-			print_tokens(tokens);
-			free_token_list(tokens);
-		}
-		else
-			printf("Error tokenizing input\n");
-		i++;
+		ft_token_clear(&tokens, free);
+		g_last_exit_status = execute_command_list(cmds, env_list);
+		free_command_list(cmds);
 	}
+	else if (tokens)
+	{
+		ft_token_clear(&tokens, free);
+	}
+	return (0);
 }
 
-/**
- * Main entry point - test our lexer
- */
-int	main(void)
+static void	shell_loop(t_env **env_list)
 {
-	printf("\033[1;34m===== MINISHELL LEXER TEST =====\033[0m\n");
-	test_lexer();
-	printf("\033[1;34m==============================\033[0m\n");
+	char	*input;
+	int		should_exit;
+	int		ret;
+
+	should_exit = 0;
+	while (!should_exit)
+	{
+		input = readline("minishell> ");
+		if (input == NULL)
+		{
+			printf("exit\n");
+			break ;
+		}
+		if (input[0] != '\0')
+		{
+			add_history(input);
+			ret = process_command(input, env_list);
+			if (ret == 1)
+				printf("\n");
+			should_exit = ret;
+		}
+		safe_free((void **)&input);
+	}
+	clear_history();
+}
+
+int	main(int argc, char **argv, char **envp)
+{
+	t_env	*env_list;
+
+	(void)argc;
+	(void)argv;
+	signal(SIGINT, sigint_handler);
+	signal(SIGQUIT, SIG_IGN);
+	env_list = envp_to_env_list(envp);
+	if (!env_list)
+		initialize_empty_env(&env_list);
+	else
+		update_shlvl(&env_list);
+	shell_loop(&env_list);
+	free_env_list(&env_list);
 	return (0);
 }
